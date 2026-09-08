@@ -5,7 +5,7 @@ backend/app/api/grants.py — REST endpointi za pregled grantova.
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from backend.app.services import ai as ai_services
 
@@ -96,3 +96,15 @@ def list_urgent_grants(days: int = 30):
         "as_of": today.isoformat(),
         "grants": urgent,
     }
+
+@router.get("/grants/{grant_id}")
+def get_grant_by_id(grant_id: str):
+    """Return one full grant record by its stable dataset ID."""
+    for grant in ai_services._grants_cache:
+        if grant.get("id") == grant_id:
+            return grant
+
+    raise HTTPException(
+        status_code=404,
+        detail="Grant nije pronađen.",
+    )
