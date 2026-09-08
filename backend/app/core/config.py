@@ -52,6 +52,7 @@ RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))      # u sekundi
 # --- CORS — samo dozvoljeni domeni ---
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://localhost:8080",
     "http://127.0.0.1:8000",
