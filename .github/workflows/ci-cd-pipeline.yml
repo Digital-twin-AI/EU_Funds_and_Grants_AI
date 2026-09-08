@@ -74,8 +74,11 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     # One-time setup: repo Settings → Pages → Source: "GitHub Actions",
     # otherwise this job has nowhere to deploy (until then it must not fail the pipeline).
-    continue-on-error: true
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
