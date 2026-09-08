@@ -3,7 +3,7 @@ backend/app/api/schemas.py — Pydantic modeli (request/response ugovori API-ja)
 """
 
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -56,15 +56,35 @@ class SearchResponse(BaseModel):
     processing_time: float
 
 
+class GrantSummary(BaseModel):
+    """Structured grant result returned by the AI endpoint."""
+
+    grant_id: str
+    title: str
+    category: str = ""
+    status: str = ""
+    deadline: str | None = None
+    budget: str | None = None
+    url: str = ""
+    relevance: str = ""
+    verified_score: int | None = None
+    source_priority: int | None = None
+
+
 class AIAnswerRequest(BaseModel):
     """Zahtjev za AI odgovor (RAG + Gemini generacija)."""
     query: str = Field(..., min_length=3, max_length=500)
-    language: str = Field(default="bs", description="Jezik odgovora: 'bs' (bosanski) ili 'en' (engleski)")
+    language: Literal["bs", "en"] = Field(
+        default="bs",
+        description="Jezik odgovora: 'bs' ili 'en'",
+    )
 
 
 class AIAnswerResponse(BaseModel):
-    """AI-generirani odgovor s izvorima."""
+    """AI-generirani odgovor sa strukturiranim rezultatima."""
+
     answer: str
-    sources: List[Dict[str, str]]  # [{title, category, url}]
+    results: List[GrantSummary] = Field(default_factory=list)
+    sources: List[Dict[str, str]]
     request_id: str
     processing_time: float

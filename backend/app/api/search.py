@@ -189,6 +189,83 @@ def _rerank_search_results(query: str, documents: list, metadatas: list, limit: 
 
 
 
+def _optional_metadata_int(value) -> int | None:
+    """Return a safe optional integer from Chroma metadata."""
+    if value is None or str(value).strip() == "":
+        return None
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_grant_results(
+    documents: list,
+    metadatas: list,
+    limit: int = 5,
+) -> list:
+    """Build frontend-safe results from existing reranked metadata."""
+    results = []
+
+    for metadata, _document in zip(metadatas, documents):
+        metadata = metadata or {}
+        grant_id = str(
+            metadata.get("grant_id", "") or ""
+        ).strip()
+
+        # A details link is valid only with the stable metadata ID.
+        if not grant_id:
+            continue
+
+        deadline = metadata.get("deadline")
+        budget = metadata.get("budget")
+
+        results.append(
+            {
+                "grant_id": grant_id,
+                "title": str(
+                    metadata.get("title", "") or ""
+                ),
+                "category": str(
+                    metadata.get("category", "") or ""
+                ),
+                "status": str(
+                    metadata.get("status", "") or ""
+                ),
+                "deadline": (
+                    str(deadline)
+                    if deadline is not None
+                    and str(deadline).strip()
+                    else None
+                ),
+                "budget": (
+                    str(budget)
+                    if budget is not None
+                    and str(budget).strip()
+                    else None
+                ),
+                "url": str(
+                    metadata.get("url", "") or ""
+                ),
+                "relevance": str(
+                    metadata.get("relevance", "") or ""
+                ),
+                "verified_score": _optional_metadata_int(
+                    metadata.get("verified_score")
+                ),
+                "source_priority": _optional_metadata_int(
+                    metadata.get("source_priority")
+                ),
+            }
+        )
+
+        if len(results) >= limit:
+            break
+
+    return results
+
+
 @router.post("/ingest")
 async def manual_ingest(current_user: str = Depends(get_current_user)):
     """Manualni re-ingest grantova u ChromaDB bez restarta servera."""
@@ -309,6 +386,14 @@ async def ai_answer_endpoint(request: AIAnswerRequest, current_user: str = Depen
             5,
         )
 
+        # Structured results use the existing reranked metadata.
+        # No additional embedding or ChromaDB query is performed.
+        results = _build_grant_results(
+            documents,
+            metadatas,
+            limit=5,
+        )
+
         # Kontekst za AI
         context_parts = []
         sources = []
@@ -351,19 +436,26 @@ INSTRUKCIJE:
 - Navedi konkretne iznose, rokove i izvore kad su dostupni
 - Ako pitanje nije o grantovima, ljubazno usmjeri korisnika
 - Budi konkretan, koristan i precizan
-- Završi s preporukom sljedećeg koraka (npr. koji URL posjetiti)
+- Ne izmišljaj URL, rok, budžet niti drugi nedostajući podatak
+- Službene izvore korisnik otvara putem linkova prikazanih ispod odgovora
 """
 
         answer = ai_services.genai_client.generate(prompt)
 
         if not answer:
-            answer = "Nisam pronašao odgovor. Pokušajte precizirati upit ili kontaktirajte FMRPO na javnipozivi.fmrpo.gov.ba."
+            answer = (
+                "Nisam uspio generisati pouzdan odgovor iz "
+                "trenutno dostupnih podataka. Pokušajte "
+                "precizirati djelatnost, lokaciju i vrstu "
+                "investicije."
+            )
 
         duration = time.time() - start_time
         logger.info(f"✅ [ID: {req_id}] AI odgovor generisan za {duration:.2f}s ({len(answer)} znakova)")
 
         return AIAnswerResponse(
             answer=answer,
+            results=results,
             sources=sources[:5],
             request_id=req_id,
             processing_time=duration,
@@ -371,6 +463,15 @@ INSTRUKCIJE:
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"🔥 [ID: {req_id}] AI greška: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception(
+            "AI obrada nije uspjela [ID: %s]",
+            req_id,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Došlo je do interne greške. "
+                "Pokušajte ponovo."
+            ),
+        )

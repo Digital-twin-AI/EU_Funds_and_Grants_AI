@@ -150,11 +150,11 @@
             <div class="flex-1 h-px bg-gray-200"></div>
         </div>
 
-        <!-- Demo access -->
-        <a href="index.html"
-            class="block text-center text-sm text-eu-blue font-medium hover:underline">
-            <i class="fa-solid fa-eye mr-1"></i> Pogledaj besplatni demo (3 granta)
-        </a>
+        <!-- Guest demo is not enabled yet. -->
+        <p class="text-center text-sm text-gray-400 font-medium">
+            <i class="fa-solid fa-eye mr-1" aria-hidden="true"></i>
+            Besplatni demo uskoro
+        </p>
     </div>
 
     <!-- Footer -->
@@ -316,9 +316,17 @@ async function authFetch(endpoint, body) {
         log(`HTTP ${resp.status} — ${ms}ms`, resp.ok ? 'ok' : 'err');
 
         const data = await resp.json();
-        log(`Odgovor: ${JSON.stringify(data).substring(0, 120)}`, 'info');
 
-        if (!resp.ok) throw new Error(data.detail || `Greška ${resp.status}`);
+        if (!resp.ok) {
+            log('Server je odbio auth zahtjev.', 'err');
+            throw new Error(data.detail || `Greška ${resp.status}`);
+        }
+
+        log(
+            `Auth odgovor primljen za ${data.email || 'korisnika'} ` +
+            `(plan: ${data.plan || 'nije naveden'}).`,
+            'ok'
+        );
         return data;
 
     } catch (err) {

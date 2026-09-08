@@ -268,6 +268,137 @@
             margin-top: 8px; max-width: 720px; margin-left: auto; margin-right: auto;
         }
 
+
+        /* ============================================
+           GRANT ACTIONS AND DETAILS MODAL
+           ============================================ */
+        .grant-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px 12px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+        .grant-meta strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+        .grant-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .grant-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--primary);
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .grant-action:hover {
+            border-color: var(--primary-light);
+            background: var(--primary-soft);
+        }
+        .grant-action.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        .grant-action.primary:hover {
+            background: var(--primary-light);
+        }
+        .ai-answer-text {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .technical-details {
+            margin-top: 10px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+            font-size: 11px;
+        }
+        .technical-details summary {
+            cursor: pointer;
+        }
+        .grant-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.65);
+        }
+        .grant-modal-backdrop[hidden] {
+            display: none;
+        }
+        .grant-modal {
+            width: min(680px, 100%);
+            max-height: 85vh;
+            overflow-y: auto;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+        }
+        .grant-modal-header {
+            position: sticky;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 18px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+        .grant-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .grant-modal-close {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .grant-modal-body {
+            padding: 18px;
+        }
+        .grant-detail-row {
+            margin-bottom: 12px;
+        }
+        .grant-detail-label {
+            display: block;
+            margin-bottom: 3px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .grant-detail-value {
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
         /* ============================================
            RESPONSIVE
            ============================================ */
@@ -394,6 +525,37 @@
         </div>
     </div>
 
+
+    <!-- ========== GRANT DETAILS MODAL ========== -->
+    <div
+        class="grant-modal-backdrop"
+        id="grantModalBackdrop"
+        hidden
+        role="presentation"
+    >
+        <section
+            class="grant-modal"
+            id="grantModal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="grantModalTitle"
+            tabindex="-1"
+        >
+            <header class="grant-modal-header">
+                <h2 class="grant-modal-title" id="grantModalTitle">
+                    Detalji granta
+                </h2>
+                <button
+                    class="grant-modal-close"
+                    id="grantModalClose"
+                    type="button"
+                    aria-label="Zatvori detalje granta"
+                >&times;</button>
+            </header>
+            <div class="grant-modal-body" id="grantModalBody"></div>
+        </section>
+    </div>
+
     <!-- ========== JAVASCRIPT ========== -->
     <script>
         // ============================================
@@ -511,13 +673,16 @@
                 const controller = new AbortController();
                 const t = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-                const res = await fetch(`${API_BASE}/search`, {
+                const res = await fetch(`${API_BASE}/ai-answer`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${_token}`
                     },
-                    body: JSON.stringify({ query, n_results: 5 }),
+                    body: JSON.stringify({
+                        query,
+                        language: 'bs'
+                    }),
                     signal: controller.signal
                 });
 
@@ -574,61 +739,268 @@
         // ============================================
         // PRIKAZ REZULTATA
         // ============================================
+        function isSafeHttpUrl(value) {
+            if (typeof value !== 'string' || !value.trim()) {
+                return false;
+            }
+
+            try {
+                const url = new URL(value);
+                return url.protocol === 'http:' || url.protocol === 'https:';
+            } catch (_error) {
+                return false;
+            }
+        }
+
         function displayResults(query, data) {
             messageCount++;
 
-            let results = [];
-            const processingTime = data.processing_time || 0;
+            const results = Array.isArray(data.results)
+                ? data.results.slice(0, 5)
+                : [];
+            const answer = typeof data.answer === 'string'
+                ? data.answer
+                : '';
+            const processingTime = Number(data.processing_time || 0);
+            const requestId = typeof data.request_id === 'string'
+                ? data.request_id
+                : '';
 
-            // Format iz main.py: flat lista stringova + metadatas
-            if (Array.isArray(data.results) && data.results.length > 0) {
-                const metadatas = data.metadatas?.[0] || [];
-                results = data.results.map((text, i) => ({
-                    rank:      i + 1,
-                    title:     metadatas[i]?.title    || `Rezultat ${i + 1}`,
-                    category:  metadatas[i]?.category || '',
-                    text:      text,
-                    relevance: i < 3 ? 'High' : 'Medium'
-                }));
+            let html = '';
+
+            if (answer) {
+                html += `<div class="ai-answer-text">${escapeHtml(answer)}</div>`;
+            } else {
+                html +=
+                    '<div class="ai-answer-text">' +
+                    'Nisam uspio generisati pouzdan odgovor.' +
+                    '</div>';
             }
 
-            if (results.length === 0) {
-                addBotMessage(
-                    `Nisam pronašao rezultate za "<strong>${escapeHtml(query)}</strong>". ` +
-                    `Pokušajte sa drugačijim opisom vašeg projekta ili potrebe.`
-                );
+            if (results.length > 0) {
+                html += '<div class="results-wrapper">';
+
+                results.forEach((grant, index) => {
+                    const rank = index + 1;
+                    const title = grant.title || `Rezultat ${rank}`;
+                    const category = grant.category || '';
+                    const status = grant.status || '';
+                    const deadline = grant.deadline || 'Rok nije potvrđen';
+                    const budget = grant.budget || 'Budžet nije naveden';
+                    const relevance = grant.relevance || '';
+                    const grantId = grant.grant_id || '';
+                    const url = isSafeHttpUrl(grant.url)
+                        ? grant.url
+                        : '';
+
+                    html += '<article class="grant-card">';
+                    html += '<div class="grant-card-header">';
+                    html += `<span class="grant-rank">#${rank}</span>`;
+
+                    if (category) {
+                        html +=
+                            `<span class="grant-category">${escapeHtml(category)}</span>`;
+                    }
+
+                    html += '</div>';
+                    html +=
+                        `<div class="grant-title">${escapeHtml(title)}</div>`;
+                    html += '<div class="grant-meta">';
+                    html +=
+                        `<div><strong>Status:</strong> ${escapeHtml(status || 'Nije naveden')}</div>`;
+                    html +=
+                        `<div><strong>Relevantnost:</strong> ${escapeHtml(relevance || 'Nije navedena')}</div>`;
+                    html +=
+                        `<div><strong>Rok:</strong> ${escapeHtml(deadline)}</div>`;
+                    html +=
+                        `<div><strong>Budžet:</strong> ${escapeHtml(budget)}</div>`;
+                    html += '</div>';
+                    html += '<div class="grant-actions">';
+
+                    if (grantId) {
+                        html +=
+                            '<button ' +
+                            'class="grant-action primary" ' +
+                            'type="button" ' +
+                            `data-grant-id="${escapeHtml(grantId)}" ` +
+                            'onclick="openGrantDetails(this)">' +
+                            'Detalji' +
+                            '</button>';
+                    }
+
+                    if (url) {
+                        html +=
+                            '<a ' +
+                            'class="grant-action" ' +
+                            `href="${escapeHtml(url)}" ` +
+                            'target="_blank" ' +
+                            'rel="noopener noreferrer">' +
+                            'Otvori službeni izvor' +
+                            '</a>';
+                    }
+
+                    html += '</div>';
+                    html += '</article>';
+                });
+
+                html += '</div>';
+            } else {
+                html +=
+                    `<p class="results-meta">Nema strukturiranih grant rezultata za "${escapeHtml(query)}".</p>`;
+            }
+
+            html += '<details class="technical-details">';
+            html += '<summary>Tehnički detalji</summary>';
+
+            if (requestId) {
+                html += `<div>ID zahtjeva: ${escapeHtml(requestId)}</div>`;
+            }
+
+            if (processingTime > 0) {
+                html +=
+                    `<div>Vrijeme obrade: ${processingTime.toFixed(2)}s</div>`;
+            }
+
+            html += '</details>';
+
+            addBotMessage(html);
+        }
+
+        let grantModalTrigger = null;
+
+        function appendGrantDetail(container, label, value) {
+            if (
+                value === null ||
+                value === undefined ||
+                String(value).trim() === ''
+            ) {
                 return;
             }
 
-            const broji = results.length === 1 ? 'i rezultat'
-                        : results.length < 5   ? 'a rezultata'
-                        :                        'ih rezultata';
+            const row = document.createElement('div');
+            row.className = 'grant-detail-row';
 
-            let html = `Pronašao sam <strong>${results.length}</strong> relevantn${broji}:`;
-            html += '<div class="results-wrapper">';
+            const key = document.createElement('span');
+            key.className = 'grant-detail-label';
+            key.textContent = label;
 
-            for (const r of results) {
-                const textId    = `gtext-${messageCount}-${r.rank}`;
-                const showMore  = r.text.length > 200;
-                html += `
-                    <div class="grant-card">
-                        <div class="grant-card-header">
-                            <span class="grant-rank">#${r.rank}</span>
-                            ${r.category ? `<span class="grant-category">${escapeHtml(r.category)}</span>` : ''}
-                        </div>
-                        ${r.title !== `Rezultat ${r.rank}` ? `<div class="grant-title">${escapeHtml(r.title)}</div>` : ''}
-                        <div class="grant-text" id="${textId}">${escapeHtml(r.text)}</div>
-                        ${showMore ? `<button class="grant-expand" onclick="toggleExpand('${textId}', this)" aria-expanded="false">Prikaži više</button>` : ''}
-                    </div>
-                `;
+            const content = document.createElement('div');
+            content.className = 'grant-detail-value';
+            content.textContent = String(value);
+
+            row.appendChild(key);
+            row.appendChild(content);
+            container.appendChild(row);
+        }
+
+        async function openGrantDetails(button) {
+            const grantId = button.dataset.grantId;
+
+            if (!grantId) return;
+
+            grantModalTrigger = button;
+
+            const backdrop = document.getElementById('grantModalBackdrop');
+            const modal = document.getElementById('grantModal');
+            const body = document.getElementById('grantModalBody');
+            const title = document.getElementById('grantModalTitle');
+
+            title.textContent = 'Detalji granta';
+            body.textContent = 'Učitavanje detalja...';
+            backdrop.hidden = false;
+            modal.focus();
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/grants/${encodeURIComponent(grantId)}`
+                );
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(
+                        errorData.detail || `Greška ${response.status}`
+                    );
+                }
+
+                const grant = await response.json();
+
+                body.textContent = '';
+                title.textContent = grant.title || 'Detalji granta';
+
+                appendGrantDetail(body, 'Kategorija', grant.category);
+                appendGrantDetail(body, 'Status', grant.status);
+                appendGrantDetail(
+                    body,
+                    'Rok',
+                    grant.deadline || 'Rok nije potvrđen'
+                );
+                appendGrantDetail(
+                    body,
+                    'Budžet',
+                    grant.budget || 'Budžet nije naveden'
+                );
+                appendGrantDetail(body, 'Opis', grant.description);
+                appendGrantDetail(body, 'Ciljna grupa', grant.target_group);
+                appendGrantDetail(body, 'Relevantnost', grant.relevance);
+
+                if (isSafeHttpUrl(grant.url)) {
+                    const actions = document.createElement('div');
+                    actions.className = 'grant-actions';
+
+                    const link = document.createElement('a');
+                    link.className = 'grant-action primary';
+                    link.href = grant.url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = 'Otvori službeni izvor';
+
+                    actions.appendChild(link);
+                    body.appendChild(actions);
+                }
+            } catch (error) {
+                body.textContent =
+                    `Detalji nisu dostupni: ${error.message}`;
             }
+        }
 
-            html += '</div>';
-            if (processingTime > 0) {
-                html += `<div class="results-meta">Pretraga: ${processingTime.toFixed(2)}s</div>`;
+        function closeGrantDetails() {
+            const backdrop = document.getElementById('grantModalBackdrop');
+            backdrop.hidden = true;
+
+            if (grantModalTrigger) {
+                grantModalTrigger.focus();
+                grantModalTrigger = null;
             }
+        }
 
-            addBotMessage(html);
+        function trapGrantModalFocus(event) {
+            if (event.key !== 'Tab') return;
+
+            const backdrop = document.getElementById('grantModalBackdrop');
+
+            if (backdrop.hidden) return;
+
+            const focusable = Array.from(
+                backdrop.querySelectorAll(
+                    'button:not([disabled]), a[href]'
+                )
+            );
+
+            if (focusable.length === 0) return;
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (
+                !event.shiftKey &&
+                document.activeElement === last
+            ) {
+                event.preventDefault();
+                first.focus();
+            }
         }
 
         // ============================================
@@ -788,6 +1160,32 @@
                 e.preventDefault();
                 if (!sendBtn.disabled) sendMessage();
             }
+        });
+
+
+        document
+            .getElementById('grantModalClose')
+            .addEventListener('click', closeGrantDetails);
+
+        document
+            .getElementById('grantModalBackdrop')
+            .addEventListener('click', (event) => {
+                if (event.target.id === 'grantModalBackdrop') {
+                    closeGrantDetails();
+                }
+            });
+
+        document.addEventListener('keydown', (event) => {
+            const backdrop = document.getElementById(
+                'grantModalBackdrop'
+            );
+
+            if (event.key === 'Escape' && !backdrop.hidden) {
+                closeGrantDetails();
+                return;
+            }
+
+            trapGrantModalFocus(event);
         });
 
         // ============================================
