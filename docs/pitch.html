@@ -1,0 +1,1403 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta
+    name="description"
+    content="FinAssistBH je produkcijska AI platforma za pretragu EU fondova i grantova dostupnih u Bosni i Hercegovini."
+  >
+  <meta name="theme-color" content="#07111f">
+  <title>FinAssistBH | Investor Pitch</title>
+
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-soft: #0c1a2d;
+      --panel: rgba(14, 30, 51, 0.78);
+      --panel-solid: #0e1e33;
+      --line: rgba(148, 163, 184, 0.18);
+      --text: #f8fafc;
+      --muted: #a8b5c7;
+      --blue: #4da3ff;
+      --cyan: #23d5d5;
+      --yellow: #ffd84d;
+      --green: #42d392;
+      --danger: #ff7b7b;
+      --radius: 24px;
+      --max: 1180px;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(77, 163, 255, 0.18), transparent 32rem),
+        radial-gradient(circle at 86% 24%, rgba(35, 213, 213, 0.13), transparent 28rem),
+        linear-gradient(180deg, #07111f 0%, #081522 52%, #06101c 100%);
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: -100px;
+      left: 18px;
+      z-index: 100;
+      padding: 12px 16px;
+      color: #07111f;
+      background: var(--yellow);
+      border-radius: 12px;
+      font-weight: 800;
+    }
+
+    .skip-link:focus {
+      top: 18px;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 17, 31, 0.82);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-inner {
+      width: min(calc(100% - 32px), var(--max));
+      min-height: 72px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      color: #07111f;
+      background: linear-gradient(135deg, var(--yellow), #fff29b);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(255, 216, 77, 0.24);
+    }
+
+    .brand-copy {
+      display: grid;
+      line-height: 1.05;
+    }
+
+    .brand-copy small {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+    }
+
+    .nav-links a:hover,
+    .nav-links a:focus-visible {
+      color: var(--text);
+    }
+
+    .page {
+      overflow: hidden;
+    }
+
+    .section {
+      width: min(calc(100% - 32px), var(--max));
+      margin: auto;
+      padding: 100px 0;
+    }
+
+    .hero {
+      min-height: calc(100vh - 72px);
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      align-items: center;
+      gap: 64px;
+      padding-top: 72px;
+      padding-bottom: 72px;
+    }
+
+    .eyebrow,
+    .status-pill,
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow {
+      padding: 9px 13px;
+      color: #dcecff;
+      background: rgba(77, 163, 255, 0.1);
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 0 5px rgba(66, 211, 146, 0.12);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 850px;
+      margin: 24px 0;
+      font-size: clamp(3.2rem, 7vw, 6.7rem);
+      line-height: 0.96;
+      letter-spacing: -0.065em;
+    }
+
+    .gradient-text {
+      color: transparent;
+      background:
+        linear-gradient(100deg, #ffffff 0%, #9fd4ff 46%, #6be6db 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    .hero-lead {
+      max-width: 730px;
+      margin-bottom: 30px;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2vw, 1.28rem);
+    }
+
+    .hero-actions,
+    .cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .button {
+      min-height: 50px;
+      padding: 0 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px solid transparent;
+      border-radius: 15px;
+      font: inherit;
+      font-weight: 850;
+      text-decoration: none;
+      cursor: pointer;
+      transition:
+        transform 160ms ease,
+        border-color 160ms ease,
+        background 160ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+    }
+
+    .button-primary {
+      color: #07111f;
+      background: linear-gradient(135deg, var(--yellow), #ffed8a);
+      box-shadow: 0 18px 40px rgba(255, 216, 77, 0.2);
+    }
+
+    .button-secondary {
+      color: var(--text);
+      border-color: var(--line);
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .hero-note {
+      margin-top: 22px;
+      color: #8494aa;
+      font-size: 0.88rem;
+    }
+
+    .product-card {
+      position: relative;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent),
+        var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .product-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      z-index: -1;
+      background: linear-gradient(
+        135deg,
+        rgba(77, 163, 255, 0.5),
+        transparent 35%,
+        rgba(35, 213, 213, 0.25)
+      );
+      border-radius: inherit;
+      filter: blur(1px);
+    }
+
+    .browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .browser-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff7b7b;
+    }
+
+    .browser-dot:nth-child(2) {
+      background: var(--yellow);
+    }
+
+    .browser-dot:nth-child(3) {
+      background: var(--green);
+    }
+
+    .browser-address {
+      margin-left: 10px;
+      color: #7f91a9;
+      font-size: 0.78rem;
+    }
+
+    .query-box {
+      margin: 24px 0 16px;
+      padding: 18px;
+      border: 1px solid rgba(77, 163, 255, 0.28);
+      border-radius: 18px;
+      background: rgba(77, 163, 255, 0.08);
+    }
+
+    .query-label {
+      color: #7ebeff;
+      font-size: 0.72rem;
+      font-weight: 850;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .query-text {
+      margin-top: 7px;
+      font-weight: 750;
+    }
+
+    .match-card {
+      padding: 18px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .match-card + .match-card {
+      margin-top: 10px;
+    }
+
+    .rank {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      color: #07111f;
+      background: var(--yellow);
+      border-radius: 12px;
+      font-weight: 900;
+    }
+
+    .match-title {
+      font-weight: 850;
+    }
+
+    .match-meta {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .match-score {
+      color: var(--green);
+      font-size: 0.83rem;
+      font-weight: 850;
+    }
+
+    .section-head {
+      max-width: 790px;
+      margin-bottom: 42px;
+    }
+
+    .section-kicker {
+      margin-bottom: 9px;
+      color: var(--yellow);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin-bottom: 16px;
+      font-size: clamp(2.25rem, 5vw, 4.5rem);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+    }
+
+    .section-copy {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 20px;
+      display: grid;
+      place-items: center;
+      color: var(--yellow);
+      background: rgba(255, 216, 77, 0.1);
+      border: 1px solid rgba(255, 216, 77, 0.19);
+      border-radius: 15px;
+      font-size: 1.3rem;
+    }
+
+    .card h3 {
+      margin-bottom: 9px;
+      font-size: 1.22rem;
+    }
+
+    .card p {
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    .metric {
+      min-height: 210px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-value {
+      color: var(--yellow);
+      font-size: clamp(2.2rem, 4vw, 4.2rem);
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: -0.06em;
+    }
+
+    .metric-label {
+      color: var(--text);
+      font-weight: 850;
+    }
+
+    .metric-note {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .flow {
+      counter-reset: flow;
+    }
+
+    .flow-card {
+      position: relative;
+      padding-top: 68px;
+    }
+
+    .flow-card::before {
+      counter-increment: flow;
+      content: "0" counter(flow);
+      position: absolute;
+      top: 24px;
+      left: 28px;
+      color: var(--blue);
+      font-size: 0.78rem;
+      font-weight: 950;
+      letter-spacing: 0.1em;
+    }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 0.86fr 1.14fr;
+      gap: 20px;
+    }
+
+    .arch-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .arch-layer {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .arch-layer strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .arch-layer small {
+      color: var(--muted);
+    }
+
+    .benchmark {
+      padding: 34px;
+      background:
+        linear-gradient(135deg, rgba(77, 163, 255, 0.12), transparent 50%),
+        var(--panel);
+    }
+
+    .benchmark-row {
+      display: grid;
+      grid-template-columns: 1.25fr repeat(3, 1fr);
+      align-items: center;
+      gap: 12px;
+      padding: 17px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .benchmark-row:last-child {
+      border-bottom: 0;
+    }
+
+    .benchmark-row strong:not(:first-child) {
+      color: var(--green);
+      font-size: 1.25rem;
+    }
+
+    .proof {
+      border-color: rgba(66, 211, 146, 0.25);
+      background:
+        linear-gradient(145deg, rgba(66, 211, 146, 0.09), transparent 60%),
+        var(--panel);
+    }
+
+    .proof-label {
+      color: var(--green);
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .proof-value {
+      margin: 12px 0 3px;
+      font-size: 1.55rem;
+      font-weight: 900;
+    }
+
+    .pricing-card {
+      position: relative;
+    }
+
+    .pricing-card.featured {
+      border-color: rgba(255, 216, 77, 0.58);
+      transform: translateY(-8px);
+      box-shadow: 0 18px 54px rgba(255, 216, 77, 0.12);
+    }
+
+    .chip {
+      padding: 7px 10px;
+      color: var(--yellow);
+      background: rgba(255, 216, 77, 0.08);
+    }
+
+    .price {
+      margin: 20px 0 3px;
+      font-size: 2.6rem;
+      font-weight: 950;
+      letter-spacing: -0.05em;
+    }
+
+    .price small {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .feature-list {
+      padding: 0;
+      margin: 22px 0 0;
+      list-style: none;
+    }
+
+    .feature-list li {
+      padding: 8px 0;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .feature-list li::before {
+      content: "OK";
+      margin-right: 9px;
+      color: var(--green);
+      font-size: 0.67rem;
+      font-weight: 950;
+    }
+
+    .roadmap {
+      position: relative;
+    }
+
+    .roadmap::before {
+      content: "";
+      position: absolute;
+      top: 22px;
+      bottom: 22px;
+      left: 25px;
+      width: 2px;
+      background: linear-gradient(var(--green), var(--blue), var(--yellow));
+    }
+
+    .roadmap-item {
+      position: relative;
+      padding: 0 0 34px 72px;
+    }
+
+    .roadmap-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .roadmap-dot {
+      position: absolute;
+      top: 2px;
+      left: 14px;
+      width: 24px;
+      height: 24px;
+      border: 6px solid var(--bg-soft);
+      background: var(--blue);
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px var(--line);
+    }
+
+    .roadmap-item.done .roadmap-dot {
+      background: var(--green);
+    }
+
+    .roadmap-item h3 {
+      margin-bottom: 6px;
+    }
+
+    .roadmap-item p {
+      color: var(--muted);
+    }
+
+    .funding {
+      padding: 48px;
+      display: grid;
+      grid-template-columns: 1fr 0.8fr;
+      gap: 36px;
+      align-items: center;
+      border-color: rgba(255, 216, 77, 0.35);
+      background:
+        radial-gradient(circle at 82% 20%, rgba(255, 216, 77, 0.14), transparent 20rem),
+        var(--panel-solid);
+    }
+
+    .funding-number {
+      color: var(--yellow);
+      font-size: clamp(4rem, 8vw, 7rem);
+      font-weight: 950;
+      line-height: 0.9;
+      letter-spacing: -0.065em;
+    }
+
+    .allocation {
+      display: grid;
+      gap: 12px;
+    }
+
+    .allocation-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .allocation-row span {
+      color: var(--muted);
+    }
+
+    .cta {
+      padding: 58px;
+      text-align: center;
+      border: 1px solid rgba(77, 163, 255, 0.3);
+      border-radius: 32px;
+      background:
+        linear-gradient(135deg, rgba(77, 163, 255, 0.14), rgba(35, 213, 213, 0.08)),
+        var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .cta h2 {
+      max-width: 850px;
+      margin-right: auto;
+      margin-left: auto;
+    }
+
+    .cta p {
+      max-width: 680px;
+      margin-right: auto;
+      margin-bottom: 28px;
+      margin-left: auto;
+      color: var(--muted);
+    }
+
+    .cta-actions {
+      justify-content: center;
+    }
+
+    footer {
+      width: min(calc(100% - 32px), var(--max));
+      margin: auto;
+      padding: 36px 0 50px;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      color: #708198;
+      border-top: 1px solid var(--line);
+      font-size: 0.85rem;
+    }
+
+    .disclaimer {
+      margin-top: 26px;
+      padding: 16px 18px;
+      border-left: 3px solid var(--yellow);
+      color: var(--muted);
+      background: rgba(255, 216, 77, 0.055);
+      border-radius: 8px 14px 14px 8px;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .architecture,
+      .funding {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: 0;
+      }
+
+      .grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .funding-number {
+        margin-top: 8px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .section {
+        padding: 74px 0;
+      }
+
+      h1 {
+        font-size: clamp(3rem, 16vw, 5rem);
+      }
+
+      .grid-2,
+      .grid-3,
+      .grid-4 {
+        grid-template-columns: 1fr;
+      }
+
+      .product-card,
+      .card,
+      .benchmark,
+      .funding,
+      .cta {
+        padding: 22px;
+        border-radius: 20px;
+      }
+
+      .benchmark-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .benchmark-row strong:first-child {
+        grid-column: 1 / -1;
+      }
+
+      .pricing-card.featured {
+        transform: none;
+      }
+
+      .match-card {
+        grid-template-columns: auto 1fr;
+      }
+
+      .match-score {
+        grid-column: 2;
+      }
+
+      footer {
+        flex-direction: column;
+      }
+    }
+
+    @media print {
+      :root {
+        --bg: #ffffff;
+        --bg-soft: #ffffff;
+        --panel: #ffffff;
+        --panel-solid: #ffffff;
+        --line: #d7dee8;
+        --text: #0d1726;
+        --muted: #45556b;
+      }
+
+      body {
+        color: #0d1726;
+        background: #ffffff;
+      }
+
+      .nav,
+      .skip-link,
+      .hero-actions,
+      .cta-actions,
+      .print-hide {
+        display: none !important;
+      }
+
+      .section,
+      .hero {
+        width: 100%;
+        min-height: 0;
+        padding: 36px 24px;
+        page-break-inside: avoid;
+      }
+
+      .card,
+      .product-card,
+      .funding,
+      .cta,
+      .benchmark {
+        color: #0d1726;
+        background: #ffffff;
+        box-shadow: none;
+        page-break-inside: avoid;
+      }
+
+      h1 {
+        font-size: 52px;
+      }
+
+      h2 {
+        font-size: 34px;
+      }
+
+      .gradient-text {
+        color: #0d1726;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="skip-link" href="#content">Preskoči na sadržaj</a>
+
+  <nav class="nav" aria-label="Glavna navigacija">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">
+        <span class="brand-mark" aria-hidden="true">EU</span>
+        <span class="brand-copy">
+          FinAssistBH
+          <small>EU Funds Intelligence</small>
+        </span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#problem">Problem</a>
+        <a href="#product">Proizvod</a>
+        <a href="#traction">Traction</a>
+        <a href="#model">Model</a>
+        <a href="#funding">Investicija</a>
+      </div>
+
+      <button
+        class="button button-secondary print-hide"
+        type="button"
+        onclick="window.print()"
+      >
+        Sačuvaj kao PDF
+      </button>
+    </div>
+  </nav>
+
+  <main id="content" class="page">
+    <section class="section hero">
+      <div>
+        <div class="eyebrow">
+          <span class="dot" aria-hidden="true"></span>
+          Produkcijski aktivan v2.2.1
+        </div>
+
+        <h1>
+          AI koji pretvara
+          <span class="gradient-text">grant birokratiju</span>
+          u konkretne prilike.
+        </h1>
+
+        <p class="hero-lead">
+          FinAssistBH je AI platforma za pretragu EU i domaćih programa
+          finansiranja dostupnih firmama, organizacijama i institucijama u
+          Bosni i Hercegovini.
+        </p>
+
+        <div class="hero-actions">
+          <a class="button button-primary" href="./index.html">
+            Otvori live proizvod
+          </a>
+          <a
+            class="button button-secondary"
+            href="https://github.com/dinohatibovic/EU_Funds_and_Grants_AI"
+            rel="noopener"
+          >
+            Pogledaj GitHub
+          </a>
+                  </div>
+
+        <p class="hero-note">
+          Razvijeno u Tešnju, BiH. Produkcijski API, autentifikacija,
+          semantička pretraga i RAG odgovor rade danas.
+        </p>
+      </div>
+
+      <div class="product-card" aria-label="Primjer rezultata proizvoda">
+        <div class="browser-bar">
+          <span class="browser-dot"></span>
+          <span class="browser-dot"></span>
+          <span class="browser-dot"></span>
+          <span class="browser-address">finassistbh / production</span>
+        </div>
+
+        <div class="query-box">
+          <div class="query-label">Upit firme</div>
+          <div class="query-text">
+            Proizvodni MSP iz Tešnja traži podršku za digitalizaciju.
+          </div>
+        </div>
+
+        <div class="match-card">
+          <div class="rank">1</div>
+          <div>
+            <div class="match-title">Najrelevantniji programi</div>
+            <div class="match-meta">
+              RAG kontekst, strukturirani metapodaci i izvori
+            </div>
+          </div>
+          <div class="match-score">Top match</div>
+        </div>
+
+        <div class="match-card">
+          <div class="rank">2</div>
+          <div>
+            <div class="match-title">AI odgovor na bosanskom</div>
+            <div class="match-meta">
+              Sa sljedećim korakom i linkovima prema izvorima
+            </div>
+          </div>
+          <div class="match-score">5 izvora</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="problem" class="section">
+      <div class="section-head">
+        <div class="section-kicker">Problem</div>
+        <h2>Pronalaženje pravog javnog poziva je spor i fragmentiran proces.</h2>
+        <p class="section-copy">
+          Informacije su raspoređene kroz različite portale, dokumente,
+          jezike i administrativne nivoe. Timovi zato troše vrijeme na
+          pretragu prije nego što uopće počnu pripremati prijavu.
+        </p>
+      </div>
+
+      <div class="grid grid-3">
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">01</div>
+          <h3>Fragmentirani izvori</h3>
+          <p>
+            Federalni, kantonalni, lokalni i evropski programi nemaju jedan
+            zajednički format ili pretraživač.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">02</div>
+          <h3>Težak administrativni jezik</h3>
+          <p>
+            Uslovi, prihvatljivi korisnici i finansijski detalji često su
+            skriveni u dugim dokumentima.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">03</div>
+          <h3>Nepouzdano rangiranje</h3>
+          <p>
+            Klasična keyword pretraga teško razumije poslovnu potrebu,
+            lokaciju, sektor i cilj projekta zajedno.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="product" class="section">
+      <div class="section-head">
+        <div class="section-kicker">Proizvod</div>
+        <h2>Opišete firmu. FinAssistBH pronalazi i objašnjava prilike.</h2>
+        <p class="section-copy">
+          Platforma kombinira strukturirane podatke, Gemini embeddinge,
+          ChromaDB pretragu, deterministički reranking i generativni odgovor
+          sa izvorima.
+        </p>
+      </div>
+
+      <div class="grid grid-4 flow">
+        <article class="card flow-card">
+          <h3>Poslovni upit</h3>
+          <p>
+            Korisnik piše prirodnim jezikom, na primjer sektor, lokaciju,
+            veličinu firme i planirani projekt.
+          </p>
+        </article>
+
+        <article class="card flow-card">
+          <h3>Semantička analiza</h3>
+          <p>
+            Upit se pretvara u 3.072-dimenzionalni Gemini embedding.
+          </p>
+        </article>
+
+        <article class="card flow-card">
+          <h3>Rangiranje grantova</h3>
+          <p>
+            ChromaDB kandidati prolaze metadata-aware reranking prije
+            konačnog prikaza.
+          </p>
+        </article>
+
+        <article class="card flow-card">
+          <h3>Odgovor sa izvorima</h3>
+          <p>
+            RAG odgovor navodi relevantne programe i sljedeći korak za
+            korisnika.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="traction" class="section">
+      <div class="section-head">
+        <div class="section-kicker">Verificirano danas</div>
+        <h2>Nije koncept. Produkcijski tok radi end-to-end.</h2>
+        <p class="section-copy">
+          Sljedeće metrike dolaze iz verificiranog v2.2.1 produkcijskog
+          baselinea i kasnijeg post-release main deploymenta.
+        </p>
+      </div>
+
+      <div class="grid grid-4">
+        <article class="card metric proof">
+          <div class="proof-label">Dataset</div>
+          <div>
+            <div class="metric-value">30</div>
+            <div class="metric-label">strukturiranih grantova</div>
+            <div class="metric-note">ChromaDB collection: eu_grants</div>
+          </div>
+        </article>
+
+        <article class="card metric proof">
+          <div class="proof-label">Quality gate</div>
+          <div>
+            <div class="metric-value">87</div>
+            <div class="metric-label">automatiziranih testova</div>
+            <div class="metric-note">Lokalni suite prolazi</div>
+          </div>
+        </article>
+
+        <article class="card metric proof">
+          <div class="proof-label">AI retrieval</div>
+          <div>
+            <div class="metric-value">3072</div>
+            <div class="metric-label">embedding dimenzija</div>
+            <div class="metric-note">gemini-embedding-001</div>
+          </div>
+        </article>
+
+        <article class="card metric proof">
+          <div class="proof-label">Live AI smoke</div>
+          <div>
+            <div class="metric-value">200</div>
+            <div class="metric-label">HTTP /ai-answer</div>
+            <div class="metric-note">JWT i pet izvora potvrđeni</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section architecture">
+      <div class="section-head">
+        <div class="section-kicker">Tehnologija</div>
+        <h2>Modularna RAG arhitektura za siguran rast.</h2>
+        <p class="section-copy">
+          Jasne granice između interfejsa, API sloja, AI jezgre, podataka i
+          infrastrukture omogućavaju male, izolirane produkcijske promjene.
+        </p>
+      </div>
+
+      <div class="card arch-stack">
+        <div class="arch-layer">
+          <strong>GitHub Pages frontend</strong>
+          <small>Chat, auth, investor pitch i mobile-first UI</small>
+        </div>
+
+        <div class="arch-layer">
+          <strong>FastAPI backend</strong>
+          <small>JWT, REST API, health contract i lifespan startup</small>
+        </div>
+
+        <div class="arch-layer">
+          <strong>AI core</strong>
+          <small>Gemini embedding, ChromaDB, reranking i RAG</small>
+        </div>
+
+        <div class="arch-layer">
+          <strong>PostgreSQL + failure-safe startup</strong>
+          <small>Produkcijski korisnici, SQLite fallback i dataset sync</small>
+        </div>
+
+        <div class="arch-layer">
+          <strong>GitHub Actions + Render</strong>
+          <small>CI, Security Audit, deploy i post-deploy health provjera</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-kicker">Search quality</div>
+        <h2>Relevantnost se mjeri, ne pretpostavlja.</h2>
+        <p class="section-copy">
+          Produkcijski benchmark prati 15 poslovnih upita. Dodatni sensitivity
+          pogled prikazuje ranking kvalitetu za 14 upita koji imaju potvrđen
+          binary-relevant dokument.
+        </p>
+      </div>
+
+      <div class="card benchmark">
+        <div class="benchmark-row">
+          <strong>Benchmark pogled</strong>
+          <strong>HitRate@5</strong>
+          <strong>MRR@10</strong>
+          <strong>NDCG@10</strong>
+        </div>
+
+        <div class="benchmark-row">
+          <strong>Svih 15 produkcijskih upita</strong>
+          <strong>0.8667</strong>
+          <strong>0.7622</strong>
+          <strong>0.6293</strong>
+        </div>
+
+        <div class="benchmark-row">
+          <strong>14 evaluabilnih upita</strong>
+          <strong>0.9286</strong>
+          <strong>0.8167</strong>
+          <strong>0.6573</strong>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Upit o zapošljavanju mladih u FBiH ostaje dokumentiran kao dataset
+        coverage gap. Sistem ne dobiva umjetno povećanu relevance ocjenu samo
+        radi boljeg benchmark rezultata.
+      </div>
+    </section>
+
+    <section id="model" class="section">
+      <div class="section-head">
+        <div class="section-kicker">Poslovni model</div>
+        <h2>Predloženi SaaS paketi za jasne korisničke segmente.</h2>
+        <p class="section-copy">
+          Cijene ispod su poslovni prijedlog za validaciju kroz kontrolirani
+          beta program. Nisu prikazane kao postojeći prihod ili potvrđena
+          tržišna potražnja.
+        </p>
+      </div>
+
+      <div class="grid grid-4">
+        <article class="card pricing-card">
+          <span class="chip">Proposed</span>
+          <div class="price">€29 <small>/ mj.</small></div>
+          <h3>Starter</h3>
+          <p>Samostalni preduzetnici i mali MSP-ovi.</p>
+          <ul class="feature-list">
+            <li>AI grant pretraga</li>
+            <li>Sačuvani upiti</li>
+            <li>Osnovni izvještaj</li>
+          </ul>
+        </article>
+
+        <article class="card pricing-card featured">
+          <span class="chip">Beta fokus</span>
+          <div class="price">€149 <small>/ mj.</small></div>
+          <h3>Pro</h3>
+          <p>Konsultanti i organizacije koje prate više prilika.</p>
+          <ul class="feature-list">
+            <li>Napredna pretraga</li>
+            <li>Više profila</li>
+            <li>Export izvještaja</li>
+          </ul>
+        </article>
+
+        <article class="card pricing-card">
+          <span class="chip">Proposed</span>
+          <div class="price">€299 <small>/ mj.</small></div>
+          <h3>Agency</h3>
+          <p>Računovodstveni i konsultantski timovi.</p>
+          <ul class="feature-list">
+            <li>Klijentski profili</li>
+            <li>API pristup</li>
+            <li>Prioritetna podrška</li>
+          </ul>
+        </article>
+
+        <article class="card pricing-card">
+          <span class="chip">Custom</span>
+          <div class="price">€799 <small>/ mj.</small></div>
+          <h3>Enterprise</h3>
+          <p>Institucije, univerziteti i lokalne uprave.</p>
+          <ul class="feature-list">
+            <li>White-label opcija</li>
+            <li>Custom integracije</li>
+            <li>SLA razgovor</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-kicker">Roadmap</div>
+        <h2>Od dokazano stabilnog proizvoda prema tržišnoj validaciji.</h2>
+      </div>
+
+      <div class="card roadmap">
+        <article class="roadmap-item done">
+          <span class="roadmap-dot" aria-hidden="true"></span>
+          <h3>Produkcijski RAG baseline</h3>
+          <p>
+            JWT, search, AI answer, 30 dokumenata, benchmark, release i
+            post-deploy health provjera su aktivni.
+          </p>
+        </article>
+
+        <article class="roadmap-item">
+          <span class="roadmap-dot" aria-hidden="true"></span>
+          <h3>Kontrolirani beta krug</h3>
+          <p>
+            Rad sa stvarnim firmama i konsultantima, praćenje upita i ručni
+            groundedness pregled AI odgovora.
+          </p>
+        </article>
+
+        <article class="roadmap-item">
+          <span class="roadmap-dot" aria-hidden="true"></span>
+          <h3>Verified dataset expansion</h3>
+          <p>
+            Dodavanje potvrđenih poziva za nedovoljno pokrivene potrebe i
+            ponovno mjerenje produkcijskog benchmarka.
+          </p>
+        </article>
+
+        <article class="roadmap-item">
+          <span class="roadmap-dot" aria-hidden="true"></span>
+          <h3>Commercial validation</h3>
+          <p>
+            Aktiviranje paketa tek nakon potvrđene korisničke vrijednosti,
+            spremnosti naplate i operativne podrške.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="funding" class="section">
+      <div class="card funding">
+        <div>
+          <div class="section-kicker">Funding target</div>
+          <h2>€50.000 za validaciju i ubrzanje tržišnog izlaska.</h2>
+          <p class="section-copy">
+            Cilj je pretvoriti verificirani tehnički proizvod u ponovljiv
+            prodajni proces, proširiti dataset i uspostaviti mali beta program.
+          </p>
+        </div>
+
+        <div>
+          <div class="funding-number">€50k</div>
+          <div class="allocation">
+            <div class="allocation-row">
+              <span>Tehnologija, sigurnost i podaci</span>
+              <strong>€20k</strong>
+            </div>
+            <div class="allocation-row">
+              <span>Beta korisnici, prodaja i distribucija</span>
+              <strong>€18k</strong>
+            </div>
+            <div class="allocation-row">
+              <span>Operacije i runway</span>
+              <strong>€12k</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Funding cilj i alokacija predstavljaju poslovni plan za razgovor s
+        potencijalnim partnerima. Ne predstavljaju zaključenu rundu ili
+        obećanje prinosa.
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta">
+        <div class="section-kicker">Sljedeći korak</div>
+        <h2>Pogledajte proizvod, testirajte stvaran upit i razgovarajmo.</h2>
+        <p>
+          Tražimo kontrolirane beta korisnike, stručne saradnike za EU fondove
+          i strateške partnere koji mogu ubrzati tržišnu validaciju.
+        </p>
+
+        <div class="cta-actions">
+          <a class="button button-primary" href="./index.html">
+            Pokreni live demo
+          </a>
+                    <a
+            class="button button-secondary"
+            href="https://github.com/dinohatibovic/EU_Funds_and_Grants_AI/releases/tag/v2.2.1"
+            rel="noopener"
+          >
+            Release v2.2.1
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>FinAssistBH © 2026</span>
+    <span>Razvijeno u Tešnju, Bosna i Hercegovina</span>
+    <span>
+      Informativna platforma. Konačne uslove provjeriti kod izvornog
+      izdavaoca poziva.
+    </span>
+  </footer>
+</body>
+</html>
