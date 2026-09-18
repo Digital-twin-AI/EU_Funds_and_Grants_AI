@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prijava — FinAssistBH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        eu: { blue: '#003399', yellow: '#FFCC00', dark: '#001a4d', light: '#e8edf8' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background: linear-gradient(135deg, #001a4d 0%, #003399 50%, #001a4d 100%); min-height: 100vh; }
+
+        /* Log panel */
+        #log-panel {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        #log-panel .log-ok   { color: #4ade80; }
+        #log-panel .log-err  { color: #f87171; }
+        #log-panel .log-info { color: #93c5fd; }
+        #log-panel .log-warn { color: #fbbf24; }
+
+        /* Spinner animation */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+        /* Pulse loading bar */
+        @keyframes progress {
+            0%   { width: 5%;  }
+            30%  { width: 45%; }
+            70%  { width: 72%; }
+            90%  { width: 88%; }
+            100% { width: 96%; }
+        }
+        .progress-bar { animation: progress 60s ease-out forwards; }
+    </style>
+</head>
+<body class="font-sans flex items-center justify-center px-4 py-12">
+
+<div class="w-full max-w-md">
+    <!-- Logo -->
+    <div class="flex items-center justify-center gap-3 mb-8">
+        <div class="w-12 h-12 bg-eu-yellow rounded-xl flex items-center justify-center shadow-lg">
+            <span class="text-eu-dark font-black text-lg">EU</span>
+        </div>
+        <div class="text-left">
+            <h1 class="text-2xl font-black text-white">FinAssistBH</h1>
+            <p class="text-blue-300 text-xs">EU Funds & Grants AI Platform</p>
+        </div>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+
+        <!-- Tab Switch -->
+        <div class="flex bg-gray-100 rounded-xl p-1 mb-6">
+            <button id="tab-login" onclick="showTab('login')"
+                class="flex-1 py-2.5 text-sm font-semibold rounded-lg transition bg-eu-blue text-white">
+                Prijava
+            </button>
+            <button id="tab-register" onclick="showTab('register')"
+                class="flex-1 py-2.5 text-sm font-semibold rounded-lg transition text-gray-500">
+                Registracija
+            </button>
+        </div>
+
+        <!-- Status Message -->
+        <div id="auth-message" class="hidden mb-4 p-3 rounded-xl text-sm"></div>
+
+        <!-- Loading / Cold start panel -->
+        <div id="loading-panel" class="hidden mb-4 rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
+            <div class="px-4 pt-3 pb-2">
+                <div class="flex items-center gap-2 text-blue-700 text-xs font-semibold mb-2">
+                    <i class="fa-solid fa-circle-notch spin"></i>
+                    <span id="loading-label">Obrada zahtjeva...</span>
+                    <span id="loading-timer" class="ml-auto font-mono text-blue-500">0s</span>
+                </div>
+                <!-- Progress bar -->
+                <div class="h-1 bg-blue-200 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-eu-blue rounded-full" style="width:5%"></div>
+                </div>
+            </div>
+
+            <!-- Log panel -->
+            <div id="log-panel" class="bg-gray-900 mx-0 px-3 py-2 max-h-36 overflow-y-auto">
+                <!-- Log lines se dodaju ovdje -->
+            </div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-gray-700 mb-1 block">Email</label>
+                <input type="email" id="login-email" required placeholder="vas@email.com"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eu-blue focus:border-eu-blue outline-none transition">
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 mb-1 block">Lozinka</label>
+                <input type="password" id="login-password" required placeholder="Vaša lozinka" minlength="6"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eu-blue focus:border-eu-blue outline-none transition">
+            </div>
+            <button type="submit" id="btn-login"
+                class="w-full bg-eu-blue text-white font-semibold py-3 rounded-xl hover:bg-blue-800 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-right-to-bracket"></i> Prijavi se
+            </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+            <div>
+                <label class="text-sm font-medium text-gray-700 mb-1 block">Email</label>
+                <input type="email" id="reg-email" required placeholder="vas@email.com"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eu-blue focus:border-eu-blue outline-none transition">
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 mb-1 block">Lozinka</label>
+                <input type="password" id="reg-password" required placeholder="Min. 6 karaktera" minlength="6"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eu-blue focus:border-eu-blue outline-none transition">
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 mb-1 block">Potvrdite lozinku</label>
+                <input type="password" id="reg-password-confirm" required placeholder="Ponovite lozinku" minlength="6"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eu-blue focus:border-eu-blue outline-none transition">
+            </div>
+            <button type="submit" id="btn-register"
+                class="w-full bg-eu-blue text-white font-semibold py-3 rounded-xl hover:bg-blue-800 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-user-plus"></i> Registruj se
+            </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3 my-5">
+            <div class="flex-1 h-px bg-gray-200"></div>
+            <span class="text-xs text-gray-400">ili</span>
+            <div class="flex-1 h-px bg-gray-200"></div>
+        </div>
+
+        <!-- Guest demo is not enabled yet. -->
+        <p class="text-center text-sm text-gray-400 font-medium">
+            <i class="fa-solid fa-eye mr-1" aria-hidden="true"></i>
+            Besplatni demo uskoro
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-blue-300 text-xs mt-6">
+        &copy; 2026 Dino Hatibovic - FinAssistBH &nbsp;|&nbsp;
+        <a href="pitch.html" class="text-eu-yellow hover:underline">Cijene</a>
+    </p>
+</div>
+
+<script>
+// =============================================================
+// CONFIG
+// =============================================================
+const IS_LOCAL   = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const API_BASE   = IS_LOCAL
+    ? 'http://127.0.0.1:8000'
+    : 'https://eu-funds-and-grants-ai.onrender.com';
+
+// Render free tier može imati cold start do 75 sekundi
+const AUTH_TIMEOUT = IS_LOCAL ? 15000 : 75000;
+
+// =============================================================
+// LOG SISTEM — vidljiv u UI + konzoli
+// =============================================================
+const logPanel   = document.getElementById('log-panel');
+const logLabel   = document.getElementById('loading-label');
+const logTimer   = document.getElementById('loading-timer');
+
+let _logTimerInt = null;
+let _logStart    = 0;
+let _progressAnim = null;
+
+function log(msg, type = 'info') {
+    const ts  = new Date().toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const cls = { ok: 'log-ok', err: 'log-err', info: 'log-info', warn: 'log-warn' }[type] || 'log-info';
+
+    // Konzola
+    const consoleFn = type === 'err' ? console.error : type === 'warn' ? console.warn : console.log;
+    consoleFn(`[FinAssist ${ts}] [${type.toUpperCase()}] ${msg}`);
+
+    // UI panel
+    const line = document.createElement('div');
+    line.className = cls;
+    const prefix = { ok: '✅', err: '❌', info: '→', warn: '⚠️' }[type] || '→';
+    line.textContent = `${ts} ${prefix} ${msg}`;
+    logPanel.appendChild(line);
+    logPanel.scrollTop = logPanel.scrollHeight;
+}
+
+function startLoading(label) {
+    _logStart = Date.now();
+
+    // Prikaži panel
+    document.getElementById('loading-panel').classList.remove('hidden');
+    logLabel.textContent = label;
+    logPanel.innerHTML   = '';
+
+    // Timer (svake sekunde)
+    _logTimerInt = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - _logStart) / 1000);
+        logTimer.textContent = `${elapsed}s`;
+
+        // Poruka za cold start
+        if (elapsed === 5 && !IS_LOCAL) {
+            log('Server je u fazi buđenja (Render free tier)...', 'warn');
+            logLabel.textContent = 'Budim server — čekaj do 60s...';
+        }
+        if (elapsed === 20 && !IS_LOCAL) {
+            log('Još malo... server se inicijalizuje.', 'warn');
+        }
+        if (elapsed === 45 && !IS_LOCAL) {
+            log('Skoro gotovo — ovo je jednom, sljedeći login je brz.', 'info');
+        }
+    }, 1000);
+
+    // Progress bar animacija
+    const bar = document.getElementById('progress-bar');
+    bar.style.width = '5%';
+    bar.style.transition = 'none';
+    requestAnimationFrame(() => {
+        bar.style.transition = `width ${AUTH_TIMEOUT / 1000}s ease-out`;
+        bar.style.width = '96%';
+    });
+}
+
+function stopLoading() {
+    clearInterval(_logTimerInt);
+    document.getElementById('loading-panel').classList.add('hidden');
+
+    // Reset progress bar
+    const bar = document.getElementById('progress-bar');
+    bar.style.transition = 'width 0.3s ease';
+    bar.style.width = '100%';
+}
+
+// =============================================================
+// SESSION
+// =============================================================
+const existingToken = localStorage.getItem('finassist_token');
+if (existingToken) {
+    console.log('[FinAssist] Token pronađen — preusmjeravam na dashboard');
+    window.location.href = 'index.html';
+}
+
+// =============================================================
+// TAB SWITCHING
+// =============================================================
+function showTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('form-login').classList.toggle('hidden', !isLogin);
+    document.getElementById('form-register').classList.toggle('hidden', isLogin);
+    document.getElementById('tab-login').className  = isLogin
+        ? 'flex-1 py-2.5 text-sm font-semibold rounded-lg transition bg-eu-blue text-white'
+        : 'flex-1 py-2.5 text-sm font-semibold rounded-lg transition text-gray-500';
+    document.getElementById('tab-register').className = !isLogin
+        ? 'flex-1 py-2.5 text-sm font-semibold rounded-lg transition bg-eu-blue text-white'
+        : 'flex-1 py-2.5 text-sm font-semibold rounded-lg transition text-gray-500';
+    hideMessage();
+    stopLoading();
+}
+
+// =============================================================
+// MESSAGES
+// =============================================================
+function showMessage(text, type) {
+    const el = document.getElementById('auth-message');
+    el.classList.remove('hidden', 'bg-green-50', 'text-green-700', 'bg-red-50', 'text-red-700', 'bg-blue-50', 'text-blue-700');
+    if      (type === 'success') el.classList.add('bg-green-50', 'text-green-700');
+    else if (type === 'error')   el.classList.add('bg-red-50', 'text-red-700');
+    else                         el.classList.add('bg-blue-50', 'text-blue-700');
+    el.textContent = text;
+}
+function hideMessage() {
+    document.getElementById('auth-message').classList.add('hidden');
+}
+
+// =============================================================
+// AUTH FETCH — sa timeoutom i logovanjem
+// =============================================================
+async function authFetch(endpoint, body) {
+    const url = `${API_BASE}${endpoint}`;
+    log(`POST ${url}`, 'info');
+    log(`Payload: ${JSON.stringify({ email: body.email, password: '***' })}`, 'info');
+
+    const controller = new AbortController();
+    const timer      = setTimeout(() => controller.abort(), AUTH_TIMEOUT);
+
+    const t0 = Date.now();
+    try {
+        const resp = await fetch(url, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(body),
+            signal:  controller.signal
+        });
+
+        clearTimeout(timer);
+        const ms = Date.now() - t0;
+        log(`HTTP ${resp.status} — ${ms}ms`, resp.ok ? 'ok' : 'err');
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            log('Server je odbio auth zahtjev.', 'err');
+            throw new Error(data.detail || `Greška ${resp.status}`);
+        }
+
+        log(
+            `Auth odgovor primljen za ${data.email || 'korisnika'} ` +
+            `(plan: ${data.plan || 'nije naveden'}).`,
+            'ok'
+        );
+        return data;
+
+    } catch (err) {
+        clearTimeout(timer);
+        const ms = Date.now() - t0;
+
+        if (err.name === 'AbortError') {
+            log(`Timeout nakon ${ms}ms (${Math.round(ms/1000)}s)`, 'err');
+            throw new Error(IS_LOCAL
+                ? 'Backend ne odgovara. Provjeri da li je pokrenut na portu 8000.'
+                : `Server nije odgovorio za ${Math.round(ms/1000)}s. Pokušaj ponovo.`
+            );
+        }
+
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('Load failed')) {
+            log(`Mrežna greška: ${err.message}`, 'err');
+            throw new Error(IS_LOCAL
+                ? 'Ne mogu se spojiti na backend (http://localhost:8000).'
+                : 'Ne mogu se spojiti na server. Provjeri internet konekciju.'
+            );
+        }
+
+        log(`Greška: ${err.message}`, 'err');
+        throw err;
+    }
+}
+
+function saveSession(data) {
+    localStorage.setItem('finassist_token', data.token);
+    localStorage.setItem('finassist_email', data.email);
+    localStorage.setItem('finassist_plan',  data.plan);
+    // Kompatibilnost sa starim auth guardom
+    localStorage.setItem('supabase_token', data.token);
+    localStorage.setItem('user_email',     data.email);
+    log(`Sesija snimljena: ${data.email} (plan: ${data.plan})`, 'ok');
+}
+
+// =============================================================
+// LOGIN
+// =============================================================
+async function handleLogin(e) {
+    e.preventDefault();
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn      = document.getElementById('btn-login');
+
+    hideMessage();
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch spin"></i> Prijava...';
+
+    startLoading('Prijava u toku...');
+    log(`Pokušaj prijave: ${email}`, 'info');
+
+    try {
+        const data = await authFetch('/auth/login', { email, password });
+        saveSession(data);
+        log('Prijava uspješna — preusmjeravam...', 'ok');
+        stopLoading();
+        showMessage('Uspješna prijava! Preusmjeravanje...', 'success');
+        setTimeout(() => window.location.href = 'index.html', 700);
+
+    } catch (err) {
+        log(`Prijava neuspješna: ${err.message}`, 'err');
+        stopLoading();
+        showMessage(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Prijavi se';
+    }
+}
+
+// =============================================================
+// REGISTER
+// =============================================================
+async function handleRegister(e) {
+    e.preventDefault();
+    const email    = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const confirm  = document.getElementById('reg-password-confirm').value;
+    const btn      = document.getElementById('btn-register');
+
+    hideMessage();
+
+    // Validacija lozinki
+    if (password !== confirm) {
+        log('Lozinke se ne poklapaju', 'err');
+        showMessage('Lozinke se ne poklapaju.', 'error');
+        return;
+    }
+    if (password.length < 6) {
+        log('Lozinka prekratka', 'err');
+        showMessage('Lozinka mora imati najmanje 6 karaktera.', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch spin"></i> Registracija...';
+
+    startLoading('Registracija u toku...');
+    log(`Pokušaj registracije: ${email}`, 'info');
+
+    try {
+        const data = await authFetch('/auth/register', { email, password });
+        saveSession(data);
+        log('Registracija uspješna — preusmjeravam...', 'ok');
+        stopLoading();
+        showMessage('Dobrodošli! Preusmjeravanje na dashboard...', 'success');
+        setTimeout(() => window.location.href = 'index.html', 800);
+
+    } catch (err) {
+        log(`Registracija neuspješna: ${err.message}`, 'err');
+        stopLoading();
+        showMessage(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Registruj se';
+    }
+}
+
+// =============================================================
+// INIT LOG
+// =============================================================
+console.log(`[FinAssist] Auth inicijalizovan | API: ${API_BASE} | Timeout: ${AUTH_TIMEOUT/1000}s`);
+</script>
+
+</body>
+</html>
