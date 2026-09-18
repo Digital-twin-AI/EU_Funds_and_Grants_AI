@@ -6,15 +6,22 @@ import logging
 import time
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from backend.app.api.schemas import (
     AIAnswerRequest,
     AIAnswerResponse,
+    DemoAIAnswerResponse,
+    DemoQuota,
     SearchRequest,
     SearchResponse,
 )
 from backend.app.core.security import get_current_user
+from backend.app.core.rate_limit import (
+    consume_guest_quota,
+    derive_guest_client_key,
+    inspect_guest_quota,
+)
 from backend.app.services import ai as ai_services
 
 logger = logging.getLogger("eu_grants_api")
@@ -351,8 +358,9 @@ async def search_endpoint(request: SearchRequest, current_user: str = Depends(ge
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/ai-answer", response_model=AIAnswerResponse)
-async def ai_answer_endpoint(request: AIAnswerRequest, current_user: str = Depends(get_current_user)):
+async def _execute_ai_answer(
+    request: AIAnswerRequest,
+) -> AIAnswerResponse:
     """
     AI odgovor koji kombinuje RAG pretragu + Gemini generaciju (gemini-2.5-flash).
     Vraća strukturirani odgovor na bosanskom ili engleskom jeziku.
@@ -475,3 +483,52 @@ INSTRUKCIJE:
                 "Pokušajte ponovo."
             ),
         )
+
+
+@router.post("/ai-answer", response_model=AIAnswerResponse)
+async def ai_answer_endpoint(
+    request: AIAnswerRequest,
+    current_user: str = Depends(get_current_user),
+):
+    """JWT-protected AI answer with the existing external contract."""
+    return await _execute_ai_answer(request)
+
+
+@router.post("/demo/ai-answer", response_model=DemoAIAnswerResponse)
+async def demo_ai_answer_endpoint(
+    request: AIAnswerRequest,
+    http_request: Request,
+):
+    """Public rate-limited Guest Demo AI endpoint."""
+    client_key = derive_guest_client_key(http_request)
+    quota = inspect_guest_quota(client_key)
+
+    if not quota["allowed"]:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "Demo limit je dostignut. "
+                "Registrujte se za nastavak pretrage."
+            ),
+            headers={
+                "Retry-After": str(quota["reset_after_seconds"]),
+            },
+        )
+
+    result = await _execute_ai_answer(request)
+    updated_quota = consume_guest_quota(client_key)
+
+    return DemoAIAnswerResponse(
+        answer=result.answer,
+        results=result.results,
+        sources=result.sources,
+        request_id=result.request_id,
+        processing_time=result.processing_time,
+        demo=DemoQuota(
+            limit=updated_quota["limit"],
+            remaining=updated_quota["remaining"],
+            reset_after_seconds=updated_quota[
+                "reset_after_seconds"
+            ],
+        ),
+    )

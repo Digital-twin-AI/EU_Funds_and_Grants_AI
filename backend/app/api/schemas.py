@@ -88,3 +88,17 @@ class AIAnswerResponse(BaseModel):
     sources: List[Dict[str, str]]
     request_id: str
     processing_time: float
+
+
+class DemoQuota(BaseModel):
+    """Authoritative Guest Demo quota returned by the backend."""
+
+    limit: int = Field(ge=0)
+    remaining: int = Field(ge=0)
+    reset_after_seconds: int = Field(ge=0)
+
+
+class DemoAIAnswerResponse(AIAnswerResponse):
+    """AI response extended with Guest Demo quota information."""
+
+    demo: DemoQuota

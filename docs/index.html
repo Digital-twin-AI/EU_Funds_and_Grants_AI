@@ -469,6 +469,11 @@
         <div class="header-status" role="status" aria-live="polite" aria-label="Status servera">
             <span class="status-dot" id="statusDot" aria-hidden="true"></span>
             <span id="statusText">Provjera...</span>
+            <span
+                id="guestDemoBadge"
+                hidden
+                style="font-size:11px;font-weight:600;color:#1a4b8c;background:#e8f0fe;padding:2px 8px;border-radius:999px;"
+            >Demo · 3 AI odgovora</span>
         </div>
     </header>
 
@@ -575,12 +580,20 @@
         const HEALTH_CHECK_INTERVAL = 5 * 60 * 1000;
 
         // ============================================
-        // AUTH GUARD — redirect na auth.html ako nema tokena
+        // AUTHENTICATED OR EXPLICIT GUEST DEMO MODE
         // ============================================
+        const _pageParams = new URLSearchParams(window.location.search);
         const _token = localStorage.getItem('finassist_token');
-        if (!_token) {
+        const _requestedDemo = _pageParams.get('mode') === 'demo';
+        const isDemoMode = !_token && _requestedDemo;
+
+        if (!_token && !_requestedDemo) {
             window.location.href = 'auth.html';
         }
+
+        const AI_ENDPOINT = isDemoMode
+            ? `${API_BASE}/demo/ai-answer`
+            : `${API_BASE}/ai-answer`;
 
         // ============================================
         // STATE
@@ -598,6 +611,11 @@
         const sendBtn     = document.getElementById('sendBtn');
         const statusDot   = document.getElementById('statusDot');
         const statusText  = document.getElementById('statusText');
+        const guestDemoBadge = document.getElementById('guestDemoBadge');
+
+        if (isDemoMode && guestDemoBadge) {
+            guestDemoBadge.hidden = false;
+        }
 
         // ============================================
         // HEALTH CHECK — provjeri backend, ponavljaj svakih 5 min
@@ -673,11 +691,13 @@
                 const controller = new AbortController();
                 const t = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-                const res = await fetch(`${API_BASE}/ai-answer`, {
+                const res = await fetch(AI_ENDPOINT, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${_token}`
+                        ...(_token
+                            ? { 'Authorization': `Bearer ${_token}` }
+                            : {})
                     },
                     body: JSON.stringify({
                         query,
@@ -689,13 +709,35 @@
                 clearTimeout(t);
 
                 if (!res.ok) {
-                    if (res.status === 401) {
+                    const errData = await res.json().catch(() => ({}));
+
+                    if (res.status === 401 && !isDemoMode) {
                         localStorage.removeItem('finassist_token');
                         window.location.href = 'auth.html';
                         return;
                     }
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.detail || `Greška ${res.status}`);
+
+                    if (res.status === 429 && isDemoMode) {
+                        removeMessage(loadingId);
+                        const detail = typeof errData.detail === 'string'
+                            ? errData.detail
+                            : 'Demo limit je dostignut.';
+
+                        addBotMessage(
+                            '<div class="ai-answer-text">' +
+                            escapeHtml(detail) +
+                            '</div>' +
+                            '<div class="grant-actions">' +
+                            '<a class="grant-action primary" ' +
+                            'href="auth.html">Registrujte se</a>' +
+                            '</div>'
+                        );
+                        return;
+                    }
+
+                    throw new Error(
+                        errData.detail || `Greška ${res.status}`
+                    );
                 }
 
                 const data = await res.json();
@@ -706,6 +748,31 @@
 
                 removeMessage(loadingId);
                 displayResults(query, data);
+
+                if (
+                    isDemoMode &&
+                    data.demo &&
+                    Number.isInteger(data.demo.remaining)
+                ) {
+                    const remaining = Math.max(
+                        0,
+                        data.demo.remaining
+                    );
+
+                    addBotMessage(
+                        '<div class="ai-answer-text">' +
+                        `Demo: preostalo AI odgovora: ${remaining}.` +
+                        '</div>' +
+                        (
+                            remaining === 0
+                                ? '<div class="grant-actions">' +
+                                  '<a class="grant-action primary" ' +
+                                  'href="auth.html">Registrujte se</a>' +
+                                  '</div>'
+                                : ''
+                        )
+                    );
+                }
 
             } catch (err) {
                 removeMessage(loadingId);

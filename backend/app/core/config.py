@@ -49,6 +49,12 @@ def use_sqlite_fallback() -> None:
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "30"))  # max zahtjeva
 RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))      # u sekundi
 
+# --- Guest Demo, best-effort in-memory quota ---
+GUEST_DEMO_LIMIT = int(os.getenv("GUEST_DEMO_LIMIT", "3"))
+GUEST_DEMO_WINDOW_SECONDS = int(
+    os.getenv("GUEST_DEMO_WINDOW_SECONDS", "3600")
+)
+
 # --- CORS — samo dozvoljeni domeni ---
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
