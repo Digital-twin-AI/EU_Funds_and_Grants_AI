@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -48,7 +50,22 @@ jobs:
         run: bash -n tests/benchmarks/run_search_benchmark.sh
 
       - name: Detect whitespace errors
-        run: git diff --check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$PR_BASE_SHA" ]; then
+            git diff --check "$PR_BASE_SHA...HEAD"
+          elif [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$PUSH_BEFORE_SHA^{commit}" 2>/dev/null; then
+            git diff --check "$PUSH_BEFORE_SHA...HEAD"
+          elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            git diff --check HEAD^...HEAD
+          else
+            git diff --check
+          fi
 
   deploy-backend:
     name: Deploy to Render
@@ -70,7 +87,7 @@ jobs:
   deploy-frontend:
     name: Deploy frontend to GitHub Pages
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [lint, test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     # One-time setup: repo Settings → Pages → Source: "GitHub Actions",
     # otherwise this job has nowhere to deploy (until then it must not fail the pipeline).
