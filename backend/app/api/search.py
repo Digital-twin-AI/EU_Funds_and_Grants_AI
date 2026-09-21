@@ -321,9 +321,10 @@ async def search_endpoint(request: SearchRequest, current_user: str = Depends(ge
         doc_count = ai_services.chroma_client.collection.count()
         requested_n = max(request.n_results, 1)
         candidate_n = min(max(requested_n * 3, requested_n), max(doc_count, 1))
-        search_results = ai_services.chroma_client.query(
+        search_results = ai_services.chroma_client.query_hybrid(
+            query_text=request.query,
             query_embeddings=query_vectors,
-            n_results=candidate_n
+            n_results=candidate_n,
         )
 
         raw_documents = search_results.get("documents", [[]])[0] if search_results else []
@@ -380,9 +381,10 @@ async def _execute_ai_answer(
 
         doc_count = ai_services.chroma_client.collection.count()
         candidate_n = min(12, max(doc_count, 1))
-        search_results = ai_services.chroma_client.query(
+        search_results = ai_services.chroma_client.query_hybrid(
+            query_text=request.query,
             query_embeddings=query_vectors,
-            n_results=candidate_n
+            n_results=candidate_n,
         )
 
         raw_metadatas = search_results.get("metadatas", [[]])[0]

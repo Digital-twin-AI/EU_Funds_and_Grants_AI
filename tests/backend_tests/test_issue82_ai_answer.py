@@ -38,8 +38,15 @@ class DummyChromaClient:
         self.collection = DummyCollection()
         self.calls = 0
 
-    def query(self, *, query_embeddings, n_results):
+    def query_hybrid(
+        self,
+        *,
+        query_text,
+        query_embeddings,
+        n_results,
+    ):
         self.calls += 1
+        assert query_text == "digitalizacija MSP ZDK"
         assert query_embeddings == [[0.1, 0.2, 0.3]]
         assert n_results == 2
 
