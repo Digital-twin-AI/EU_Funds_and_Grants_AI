@@ -196,6 +196,68 @@ def _rerank_search_results(query: str, documents: list, metadatas: list, limit: 
 
 
 
+
+def _meta_field(meta: dict, key: str, default: str = "NOT_AVAILABLE") -> str:
+    """Safe string field for grounded AI context."""
+    if not meta:
+        return default
+    value = meta.get(key)
+    if value is None:
+        return default
+    s = str(value).strip()
+    return s if s else default
+
+
+def _build_grounded_context(documents: list, metadatas: list) -> tuple[str, list]:
+    """
+    Structured context for Gemini + sources list.
+    Only metadata values; missing fields = NOT_AVAILABLE.
+    """
+    blocks: list[str] = []
+    sources: list[dict] = []
+
+    for index, (meta, doc) in enumerate(zip(metadatas, documents), start=1):
+        meta = meta or {}
+        title = _meta_field(meta, "title", "Nepoznat grant")
+        category = _meta_field(meta, "category")
+        status = _meta_field(meta, "status")
+        deadline = _meta_field(meta, "deadline")
+        budget = _meta_field(meta, "budget")
+        url = _meta_field(meta, "url")
+        grant_id = _meta_field(meta, "grant_id")
+        verified = _meta_field(meta, "verified_score")
+        priority = _meta_field(meta, "source_priority")
+        next_expected = _meta_field(meta, "next_expected")
+        description = (str(doc or "")[:250]).strip() or "NOT_AVAILABLE"
+
+        blocks.append(
+            f"GRANT {index}\n"
+            f"GRANT_ID: {grant_id}\n"
+            f"TITLE: {title}\n"
+            f"CATEGORY: {category}\n"
+            f"STATUS: {status}\n"
+            f"DEADLINE: {deadline}\n"
+            f"NEXT_EXPECTED: {next_expected}\n"
+            f"BUDGET: {budget}\n"
+            f"URL: {url}\n"
+            f"VERIFIED_SCORE: {verified}\n"
+            f"SOURCE_PRIORITY: {priority}\n"
+            f"DESCRIPTION: {description}"
+        )
+
+        if url != "NOT_AVAILABLE":
+            sources.append(
+                {
+                    "title": title if title != "Nepoznat grant" else title,
+                    "category": category if category != "NOT_AVAILABLE" else "",
+                    "url": url,
+                }
+            )
+
+    context = "\n\n".join(blocks) if blocks else "Nema pronađenih grantova."
+    return context, sources
+
+
 def _optional_metadata_int(value) -> int | None:
     """Return a safe optional integer from Chroma metadata."""
     if value is None or str(value).strip() == "":
@@ -404,24 +466,8 @@ async def _execute_ai_answer(
             limit=5,
         )
 
-        # Kontekst za AI
-        context_parts = []
-        sources = []
-        for meta, doc in zip(metadatas, documents):
-            title = meta.get("title", "Nepoznat grant")
-            category = meta.get("category", "")
-            budget = meta.get("budget", "N/A")
-            deadline = meta.get("deadline", "N/A")
-            url = meta.get("url", "")
-            context_parts.append(
-                f"• {title} ({category})\n"
-                f"  Budžet: {budget} | Rok: {deadline}\n"
-                f"  Opis: {doc[:250]}"
-            )
-            if url:
-                sources.append({"title": title, "category": category, "url": url})
-
-        context = "\n\n".join(context_parts) if context_parts else "Nema pronađenih grantova."
+        # Grounded context for AI (structured metadata only)
+        context, sources = _build_grounded_context(documents, metadatas)
 
         lang_instruction = (
             "Odgovaraj ISKLJUČIVO na bosanskom jeziku."
@@ -435,19 +481,21 @@ EU programe (EU4Agri, EU4CAET, Horizont Evropa), i lokalne poticaje.
 
 {lang_instruction}
 
-DOSTUPNI GRANTOVI IZ BAZE:
+VERIFIED GRANT CONTEXT (jedini izvor činjenica):
 {context}
 
 KORISNIČKO PITANJE:
 {request.query}
 
-INSTRUKCIJE:
-- Koristi informacije iz konteksta iznad
-- Navedi konkretne iznose, rokove i izvore kad su dostupni
-- Ako pitanje nije o grantovima, ljubazno usmjeri korisnika
-- Budi konkretan, koristan i precizan
-- Ne izmišljaj URL, rok, budžet niti drugi nedostajući podatak
-- Službene izvore korisnik otvara putem linkova prikazanih ispod odgovora
+PRAVILA:
+1. Koristi ISKLJUČIVO vrijednosti iz VERIFIED GRANT CONTEXT.
+2. Ako je polje NOT_AVAILABLE, nemoj ga izmišljati niti tvrditi da postoji.
+3. Ako URL nije NOT_AVAILABLE, smiješ ga navesti; nemoj tvrditi da link ne postoji.
+4. DEADLINE je potvrđeni rok; NEXT_EXPECTED je samo očekivani budući ciklus — ne predstavljaj ga kao potvrđeni rok.
+5. Ako je VERIFIED_SCORE broj manji od 50, označi te tvrdnje kao nepotvrđene / informativne.
+6. Ne izmišljaj URL, rok, budžet, status ni datume koji nisu u kontekstu.
+7. Ne piši odjeljak "Izvori: nema linka" — službeni linkovi su u API polju sources.
+8. Ako pitanje nije o grantovima, ljubazno usmjeri korisnika.
 """
 
         answer = ai_services.genai_client.generate(prompt)
