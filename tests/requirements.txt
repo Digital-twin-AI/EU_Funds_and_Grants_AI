@@ -1,0 +1,6 @@
+# Test-only dependencies.
+# Starlette TestClient requires httpx2.
+# httpx remains required by SEDIA integration tests.
+pytest
+httpx
+httpx2
