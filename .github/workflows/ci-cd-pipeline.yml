@@ -74,15 +74,28 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Trigger Render deploy hook
+        shell: bash
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
-          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
-            curl -fsS -X POST "$RENDER_DEPLOY_HOOK"
-            echo "Render deploy triggered."
-          else
-            echo "RENDER_DEPLOY_HOOK secret not set — Render auto-deploys on push anyway (skipping)."
+          set -euo pipefail
+
+          if [ -z "${RENDER_DEPLOY_HOOK:-}" ]; then
+            echo "[FAIL] RENDER_DEPLOY_HOOK secret is not configured."
+            exit 1
           fi
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-all-errors \
+            --max-time 30 \
+            -X POST \
+            "$RENDER_DEPLOY_HOOK"
+
+          echo "[OK] Render deploy hook accepted."
 
   deploy-frontend:
     name: Deploy frontend to GitHub Pages
