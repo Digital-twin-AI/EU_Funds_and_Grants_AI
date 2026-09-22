@@ -1,6 +1,8 @@
 # Test-only dependencies.
 # Starlette TestClient requires httpx2.
 # httpx remains required by SEDIA integration tests.
+# AnyIO 4.15.x emits an upstream Starlette import deprecation under warnings=error.
 pytest
 httpx
 httpx2
+anyio==4.14.2
